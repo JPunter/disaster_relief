@@ -1,16 +1,66 @@
 import sys
+import numpy as np
+import pandas as pd
+from sqlalchemy import create_engine
+import os
+import time
+from contextlib import contextmanager
+
+@contextmanager
+def timer(process):
+    t0 = time.time()
+    yield
+    if int(time.time() - t0) < 60:
+        print('{} executed in {} seconds\n'.format(
+            process, int(time.time() - t0)))
+    else:
+        print('{} executed in {} minutes\n'.format(
+            process, int(time.time() - t0) / 60))
 
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    with timer("Load data"):
+        print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
+              .format(messages_filepath, categories_filepath))
+        messages = pd.read_csv(messages_filepath)
+        categories = pd.read_csv(categories_filepath)
+        df = messages.set_index('id').join(
+            categories.set_index('id'), on='id').reset_index()
+        return df
 
 
 def clean_data(df):
-    pass
-
+    with timer("Clean data"):
+        print('Cleaning data...')
+        # Split categories into separate columns
+        cat_df = df['categories'].str.split(';', expand=True)
+        print('    Created {} new category columns'.format((cat_df.shape[1] - df.shape[1])))
+        # Rename the columns of `categories`
+        cat_df.columns = [x.split('-')[0] for x in list(cat_df.iloc[0, :])]
+        # Change columns into booleans
+        cat_df = cat_df.apply(lambda x: x.str.split('-', expand=True)[1])
+        # Drop the original categories column from `df`
+        df_nocat = df.drop(['categories'], axis=1)
+        # Concatenate the original dataframe with the new `categories` dataframe
+        df_concat = df_nocat.join(cat_df)
+        # Drop duplicates
+        duplicate_count = sum(df_concat.duplicated())
+        df_concat = df_concat.drop_duplicates()
+        print('    Removed {} duplicates'.format(duplicate_count))
+        return df_concat
 
 def save_data(df, database_filename):
-    pass  
+    with timer("Save data"):
+        print('Saving data...\n    DATABASE: {}'.format(database_filename))
+        db_loc = 'sqlite:///{}'.format(database_filename)
+        engine = create_engine(db_loc)
+        table_name = 'labelled_messages'
+        try:
+            df.to_sql(table_name, engine, index=False)
+            print("    Table '{}' saved into {} database".format(table_name, database_filename))
+        except ValueError as e:
+            print("    ERROR: Couldn't save table '{}' due to error: \n    ***{}***".format(
+                  table_name, e))
 
 
 def main():
@@ -18,17 +68,11 @@ def main():
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
 
-        print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
-              .format(messages_filepath, categories_filepath))
         df = load_data(messages_filepath, categories_filepath)
 
-        print('Cleaning data...')
         df = clean_data(df)
         
-        print('Saving data...\n    DATABASE: {}'.format(database_filepath))
         save_data(df, database_filepath)
-        
-        print('Cleaned data saved to database!')
     
     else:
         print('Please provide the filepaths of the messages and categories '\
