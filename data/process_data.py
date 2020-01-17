@@ -38,7 +38,7 @@ def clean_data(df):
         # Rename the columns of `categories`
         cat_df.columns = [x.split('-')[0] for x in list(cat_df.iloc[0, :])]
         # Change columns into booleans
-        cat_df = cat_df.apply(lambda x: x.str.split('-', expand=True)[1])
+        cat_df = cat_df.apply(lambda x: pd.to_numeric(x.str.split('-', expand=True)[1]))
         # Drop the original categories column from `df`
         df_nocat = df.drop(['categories'], axis=1)
         # Concatenate the original dataframe with the new `categories` dataframe
