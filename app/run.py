@@ -8,10 +8,20 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+import joblib
 from sqlalchemy import create_engine
 
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
 
+
+import sys
 app = Flask(__name__)
 
 def tokenize(text):
@@ -26,11 +36,12 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('labelled_messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model_name = 'model.pkl'
+model = joblib.load("../jupyter/{}".format(model_name))
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,6 +53,7 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+    print(genre_names, genre_counts)
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -84,6 +96,7 @@ def go():
     classification_labels = model.predict([query])[0]
     classification_results = dict(zip(df.columns[4:], classification_labels))
 
+    print("\n", classification_results)
     # This will render the go.html Please see that file. 
     return render_template(
         'go.html',
