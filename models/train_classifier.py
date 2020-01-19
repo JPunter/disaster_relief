@@ -14,7 +14,6 @@ from sklearn.multioutput import MultiOutputClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LogisticRegression
 
 import pickle
 
@@ -33,6 +32,16 @@ example_db_filepath = '../data/DisasterResponse.db'
 print(sys.version)
 @contextmanager
 def timer(process):
+    """
+    Timer function called to print the time any other process takes
+
+    Args:
+        process : str
+            String to print with the output
+
+    Returns:
+        None
+    """
     t0 = time.time()
     yield
     if int(time.time() - t0) < 60:
@@ -44,6 +53,22 @@ def timer(process):
 
 
 def load_data(database_filepath, category_names):
+    """
+    Loads in DataFrame object from SQLite3 database
+    and splits into X and y for modelling
+
+    Args:
+        database_filepath : string
+            Relative location and name of .db file
+        category_names : List
+            List of table columns to filter y by
+
+    Returns:
+        X : DataFrame
+            X DataFrame containing messages column
+        y : DatFrame
+            y DataFrame containing category classifcations
+    """
     with timer('Load data'):
         engine = create_engine('sqlite:///{}'.format(database_filepath))
         connection = engine.connect()
@@ -53,10 +78,22 @@ def load_data(database_filepath, category_names):
 
         y = df[category_names]
         X = df['message']
-        return X, y, category_names
+        return X, y
 
 
 def tokenize(text):
+    """
+    Tokenizes a string of text by dumping punctuation,
+    lemmatizing and stemming the string
+
+    Args:
+        text : str
+            Text string to be tokenized
+
+    Returns:
+        clean_tokens : List
+            List of tokenized string
+    """
     text = re.sub(r"[^a-zA-Z0-9]", " ", text)
 
     tokens = word_tokenize(text)
@@ -71,11 +108,21 @@ def tokenize(text):
 
 
 def build_model():
+    """
+    Returns a PipeLine object of various model components
+
+    Args:
+        None
+
+    Returns:
+        pipeline : sklearn.Pipeline object
+            Contains a vectorizer, transformer and classifier estimator
+    """
     with timer('Build model'):
         pipeline = Pipeline([
             ('vect', CountVectorizer(tokenizer=tokenize)),
             ('tfidf', TfidfTransformer()),
-            ('clf', MultiOutputClassifier(LogisticRegression(solver='sag')))
+            ('clf', MultiOutputClassifier(KNeighborsClassifier()))
         ])
         steps = '    Pipeline steps:'
         for index, step in enumerate(pipeline.steps):
@@ -85,6 +132,24 @@ def build_model():
 
 
 def best_gridsearch_estimator(model, X_train, y_train, parameters):
+    """
+    Returns a PipeLine object with optimised parameters
+    based on options in parameters arg and cross validation
+
+    Args:
+        model : sklearn model object
+            Model to be cross validated
+        X_train : DataFrame
+            Training set
+        y_train : DataFrame
+            Expected results
+        parameters : Dictionary
+            values to test iteratively on
+
+    Returns:
+        best_estimator_ : GridSearchCV best_estimator_ object
+            Model object containing best parameters from options given
+    """
     with timer("Tune model hyperparameters"):
         para_combinations = 1
         for i in parameters.values():
@@ -99,6 +164,23 @@ def best_gridsearch_estimator(model, X_train, y_train, parameters):
 
 
 def evaluate_model(model, X_test, y_test, category_names):
+    """
+    Prints accuracy, precision, recall and F1 information of
+    a given model
+
+    Args:
+        model : sklearn model object
+            Model to evaluate
+        X_test : DataFrame
+            Testing set
+        y_test : DataFrame
+            Expected results
+        category_names : list
+            values to title y_prediction columns with
+
+    Returns:
+        None
+    """
     y_preds_array = model.predict(X_test)
     y_preds = pd.DataFrame(y_preds_array)
     y_preds.columns = category_names
@@ -131,6 +213,23 @@ def evaluate_model(model, X_test, y_test, category_names):
     print('------------------------------------------\n\n')
 
 def save_model(model, model_filepath, X, y):
+    """
+    Saves a new model object with the optimised parameters
+    as a .pkl file
+
+    Args:
+        model : sklearn model object
+            Model to save
+        model_filepath : str
+            Relative location to save .pkl file
+        X : DataFrame
+            Full X set
+        y : DataFrame
+            Full y set
+
+    Returns:
+        None
+    """
     with timer('{} model fit and pickle'.format(model_filepath)):
         model = model.fit(X, y)
         pickle.dump(model, open(model_filepath, "wb"))
@@ -149,7 +248,7 @@ def main():
                           'weather_related', 'floods', 'storm', 'fire', 'earthquake', 'cold',
                           'other_weather', 'direct_report']
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
-        X, y, category_names = load_data(database_filepath, category_names)
+        X, y = load_data(database_filepath, category_names)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
         
         print('Building model...')
