@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
+import plotly.graph_objects as go
 import joblib
 from sqlalchemy import create_engine
 
@@ -77,7 +78,30 @@ def index():
             }
         }
     ]
-    
+    category_names = list(df.columns[4:])
+    counts = []
+    for column in category_names:
+        counts.append(df[df[column] == 1][column].count())
+
+    graph_2 = {
+        'data': [
+            Bar(
+                x=category_names,
+                y=counts
+            )
+        ],
+
+        'layout': {
+            'title': 'Number of positive values per category',
+            'yaxis': {
+                'title': "Count"
+            },
+            'xaxis': {
+                'title': "Category"
+            }
+        }
+    }
+    graphs.append(graph_2)
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
