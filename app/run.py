@@ -57,19 +57,15 @@ model_name = '34m_tuning_model.pkl'
 model = joblib.load("../jupyter/{}".format(model_name))
 
 
-# index webpage displays cool visuals and receives user input text for model
+# index webpage displays dataset overview
 @app.route('/')
 @app.route('/index')
 def index():
     
-    # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     print(genre_names, genre_counts)
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -133,7 +129,6 @@ def go():
     classification_results = dict(zip(df.columns[4:], classification_labels))
 
     print("\n", classification_results)
-    # This will render the go.html Please see that file. 
     return render_template(
         'go.html',
         query=query,
