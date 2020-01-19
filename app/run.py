@@ -26,6 +26,18 @@ import sys
 app = Flask(__name__)
 
 def tokenize(text):
+    """
+    Tokenizes a string of text by dumping punctuation,
+    lemmatizing and stemming the string
+
+    Args:
+        text : str
+            Text string to be tokenized
+
+    Returns:
+        clean_tokens : List
+            List of tokenized string
+    """
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
