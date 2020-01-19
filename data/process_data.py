@@ -8,6 +8,16 @@ from contextlib import contextmanager
 
 @contextmanager
 def timer(process):
+    """
+    Timer function called to print the time any other process takes
+
+    Args:
+        process : str
+            String to print with the output
+
+    Returns:
+        None
+    """
     t0 = time.time()
     yield
     if int(time.time() - t0) < 60:
@@ -19,6 +29,19 @@ def timer(process):
 
 
 def load_data(messages_filepath, categories_filepath):
+    """
+    Loads in two csv files into dataframes and merges them
+
+    Args:
+        messages_filepath : str
+            Relative location of messages csv file
+        categories_filepath : str
+            Relative location of categories csv file
+
+    Returns:
+        df : DataFrame  
+            Pandas DataFrame object
+    """
     with timer("Load data"):
         print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
               .format(messages_filepath, categories_filepath))
@@ -30,6 +53,17 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """
+    Cleans the newly joined df DataFrame object
+
+    Args:
+        df : DataFrame
+            DataFrame object to be cleaned
+
+    Returns:
+        df_concat : DataFrame
+            Cleaned Pandas DataFrame object
+    """
     with timer("Clean data"):
         print('Cleaning data...')
         # Split categories into separate columns
@@ -38,7 +72,12 @@ def clean_data(df):
         # Rename the columns of `categories`
         cat_df.columns = [x.split('-')[0] for x in list(cat_df.iloc[0, :])]
         # Change columns into booleans
-        cat_df = cat_df.apply(lambda x: pd.to_numeric(x.str.split('-', expand=True)[1]))
+        cat_df = cat_df.apply(lambda x: x.str.split('-', expand=True)[1])
+        cat_df = cat_df.apply(lambda x: pd.to_numeric(x.replace('2', '1')))
+        print('    Forced all categories into binary values')
+        # Drop child_alone as is all 0
+        cat_df = cat_df.drop(['child_alone'], axis=1)
+        print('    Dropped "Child Alone" category, as all values are 0')
         # Drop the original categories column from `df`
         df_nocat = df.drop(['categories'], axis=1)
         # Concatenate the original dataframe with the new `categories` dataframe
@@ -50,6 +89,18 @@ def clean_data(df):
         return df_concat
 
 def save_data(df, database_filename):
+    """
+    Saves DataFrame object to an SQLite3 database
+
+    Args:
+        df : DataFrame
+            DataFrame object to be stored as table
+        database_filename : string
+            Relative location and name of .db file
+
+    Returns:
+        None
+    """
     with timer("Save data"):
         print('Saving data...\n    DATABASE: {}'.format(database_filename))
         db_loc = 'sqlite:///{}'.format(database_filename)
