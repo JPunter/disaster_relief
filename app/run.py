@@ -40,7 +40,7 @@ engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('labelled_messages', engine)
 
 # load model
-model_name = 'model.pkl'
+model_name = '34m_tuning_model.pkl'
 model = joblib.load("../jupyter/{}".format(model_name))
 
 
