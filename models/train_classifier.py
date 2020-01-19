@@ -142,7 +142,7 @@ def main():
 
         category_names = ['related', 'request', 'offer',
                           'aid_related', 'medical_help', 'medical_products', 'search_and_rescue',
-                          'security', 'military', 'child_alone', 'water', 'food', 'shelter',
+                          'security', 'military', 'water', 'food', 'shelter',
                           'clothing', 'money', 'missing_people', 'refugees', 'death', 'other_aid',
                           'infrastructure_related', 'transport', 'buildings', 'electricity',
                           'tools', 'hospitals', 'shops', 'aid_centers', 'other_infrastructure',
