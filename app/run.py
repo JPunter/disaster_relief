@@ -53,8 +53,8 @@ engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('labelled_messages', engine)
 
 # load model
-model_name = '34m_tuning_model.pkl'
-model = joblib.load("../jupyter/{}".format(model_name))
+model_name = 'classifier.pkl'
+model = joblib.load("../models/{}".format(model_name))
 
 
 # index webpage displays dataset overview
