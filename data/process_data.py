@@ -8,6 +8,16 @@ from contextlib import contextmanager
 
 @contextmanager
 def timer(process):
+    """
+    Timer function called to print the time any other process takes
+
+    Args:
+        process : str
+            String to print with the output
+
+    Returns:
+        None
+    """
     t0 = time.time()
     yield
     if int(time.time() - t0) < 60:
@@ -19,6 +29,19 @@ def timer(process):
 
 
 def load_data(messages_filepath, categories_filepath):
+    """
+    Loads in two csv files into dataframes and merges them
+
+    Args:
+        messages_filepath : str
+            Relative location of messages csv file
+        categories_filepath : str
+            Relative location of categories csv file
+
+    Returns:
+        df : DataFrame  
+            Pandas DataFrame object
+    """
     with timer("Load data"):
         print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
               .format(messages_filepath, categories_filepath))
@@ -30,6 +53,17 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """
+    Cleans the newly joined df DataFrame object
+
+    Args:
+        df : DataFrame
+            DataFrame object to be cleaned
+
+    Returns:
+        df_concat : DataFrame
+            Cleaned Pandas DataFrame object
+    """
     with timer("Clean data"):
         print('Cleaning data...')
         # Split categories into separate columns
@@ -55,6 +89,18 @@ def clean_data(df):
         return df_concat
 
 def save_data(df, database_filename):
+    """
+    Saves DataFrame object to an SQLite3 database
+
+    Args:
+        df : DataFrame
+            DataFrame object to be stored as table
+        database_filename : string
+            Relative location and name of .db file
+
+    Returns:
+        None
+    """
     with timer("Save data"):
         print('Saving data...\n    DATABASE: {}'.format(database_filename))
         db_loc = 'sqlite:///{}'.format(database_filename)
