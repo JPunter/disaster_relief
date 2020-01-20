@@ -21,7 +21,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 
-
+import json
 import sys
 app = Flask(__name__)
 
@@ -64,7 +64,6 @@ def index():
     
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    print(genre_names, genre_counts)
     
     graphs = [
         {
@@ -110,6 +109,10 @@ def index():
         }
     }
     graphs.append(graph_2)
+    with open('../data/corpus_count.json', 'r') as f:
+        graph_3 = json.loads(f.read())
+    graphs.append(graph_3)
+
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
